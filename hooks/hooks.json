@@ -1,0 +1,65 @@
+{
+  "hooks": [
+    {
+      "type": "PostToolUse",
+      "matcher": {
+        "tool": "Edit",
+        "filePattern": "*.tf"
+      },
+      "hooks": [
+        {
+          "command": "command -v terraform >/dev/null 2>&1 && terraform fmt \"$FILE\" 2>/dev/null || true",
+          "description": "Terraform auto-format (on .tf edit)"
+        }
+      ]
+    },
+    {
+      "type": "PostToolUse",
+      "matcher": {
+        "tool": "Edit",
+        "filePattern": "*.tf"
+      },
+      "hooks": [
+        {
+          "command": "grep -n 'password\\|secret\\|api_key\\|access_key\\|connection_string' \"$FILE\" | grep -v 'var\\.\\|data\\.\\|azurerm_key_vault\\|sensitive\\|#' | head -5 && echo '⚠ Potential hardcoded secret detected in Terraform file. Use Key Vault or variable with sensitive = true.' || true",
+          "description": "Detect hardcoded secrets in Terraform files"
+        }
+      ]
+    },
+    {
+      "type": "PostToolUse",
+      "matcher": {
+        "tool": "Edit",
+        "filePattern": "*.tf"
+      },
+      "hooks": [
+        {
+          "command": "grep -n 'public_network_access_enabled.*=.*true\\|enable_https_traffic_only.*=.*false\\|min_tls_version.*\"TLS1_0\"\\|min_tls_version.*\"TLS1_1\"' \"$FILE\" | head -5 && echo '⚠ Security misconfiguration detected. Review public access, HTTPS, and TLS settings.' || true",
+          "description": "Detect common security misconfigurations in Terraform"
+        }
+      ]
+    },
+    {
+      "type": "PreToolUse",
+      "matcher": {
+        "tool": "Write",
+        "filePattern": "*.tfvars"
+      },
+      "hooks": [
+        {
+          "command": "echo '⚠ .tfvars ファイルを作成しようとしています。シークレットを含む場合は .gitignore に追加されていることを確認してください。'",
+          "description": "Warn before creating .tfvars files"
+        }
+      ]
+    },
+    {
+      "type": "Stop",
+      "hooks": [
+        {
+          "command": "git diff --name-only --diff-filter=AM 2>/dev/null | grep '\\.tf$' | xargs grep -l 'sku.*Premium\\|sku.*P[0-9]\\|vm_size.*Standard_D[0-9]*\\|tier.*Premium' 2>/dev/null | head -5 && echo '⚠ High-cost SKU detected in modified Terraform files. Verify cost impact with /cost-check.' || true",
+          "description": "Check for high-cost resources in modified Terraform files"
+        }
+      ]
+    }
+  ]
+}
