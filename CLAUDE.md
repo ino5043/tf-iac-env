@@ -15,12 +15,16 @@ tf-standard-env（共通コア）の上に、Terraform/Bicep/Azure 固有のエ�
 # 共通コアが未インストールの場合
 cd ../10_tf-standard-env && npm run install:env
 
-# IaC パッケージをインストール
+# IaC パッケージをインストール（agents / commands / skills を ~/.claude/ に配置）
 npm run install:env
 
-# プロジェクトに CLAUDE.md を初期化
+# プロジェクトに CLAUDE.md を初期化し、ルールを <project>/.claude/rules/ に配置
 npm run install:env -- --project /path/to/iac-project
 ```
+
+> **ルールはプロジェクト単位で配布します**（tf-standard-env ADR-009）。
+> `npm run install:env` だけでは領域ルールは読み込まれません。対象プロジェクトごとに `--project` を実行してください。
+> 旧方式で `~/.claude/rules/` に入った領域ルールは、`npm run install:env` 実行時に自動で削除されます。
 
 ## Components
 
